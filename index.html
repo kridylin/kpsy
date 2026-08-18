@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>K心理 - 情绪稳定·治愈成长</title>
+  <style>
+    /* ---------------- 全局与主题变量 ---------------- */
+    :root {
+      --primary-orange: #FF884B;
+      --secondary-yellow: #FFD36E;
+      --text-brown: #5C3D2E;
+      --light-brown: #8D6E63;
+      --bg-color: #FFF9F2;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --shadow: 0 8px 32px rgba(92, 61, 46, 0.08);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0e6db; /* 外层背景 */
+      color: var(--text-brown);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* ---------------- 容器与 iOS 毛玻璃效果 ---------------- */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 30px rgba(0,0,0,0.1);
+      overflow-x: hidden;
+    }
+
+    .glass-effect {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* 顶部导航栏 */
+    .navbar {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .navbar .back-btn { font-size: 24px; cursor: pointer; display: none; color: var(--primary-orange); width: 30px;}
+    .navbar .logo-title { display: flex; align-items: center; justify-content: center; flex: 1; }
+    .navbar .logo-title img { height: 36px; margin-right: 8px; border-radius: 50%; }
+    .navbar .logo-title span { font-size: 18px; font-weight: 800; color: var(--text-brown); }
+    .navbar .city-tag { font-size: 12px; background: rgba(255, 136, 75, 0.15); color: var(--primary-orange); padding: 4px 10px; border-radius: 12px; font-weight: bold; width: 50px; text-align: center;}
+
+    /* ---------------- 视图控制 ---------------- */
+    .view { display: none; padding: 16px; padding-bottom: 90px; flex: 1; animation: fadeIn 0.3s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---------------- 1. 首页样式 ---------------- */
+    .banner-game {
+      background: linear-gradient(135deg, var(--secondary-yellow) 0%, var(--primary-orange) 100%);
+      border-radius: 20px;
+      padding: 24px 20px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 20px rgba(255, 136, 75, 0.3);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .banner-game::after { content: '✨'; position: absolute; right: -10px; top: -10px; font-size: 80px; opacity: 0.15; }
+    .game-title { font-size: 20px; font-weight: 900; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+    .game-sub { font-size: 13px; opacity: 0.95; font-weight: 500; }
+    .game-btn { background: #fff; color: var(--primary-orange); font-size: 13px; font-weight: 800; border-radius: 20px; padding: 8px 16px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+    .section-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;}
+
+    /* 活动卡片 */
+    .activity-card { 
+      background: rgba(255, 255, 255, 0.8); 
+      border-radius: 20px; 
+      margin-bottom: 20px; 
+      box-shadow: var(--shadow); 
+      cursor: pointer; 
+      border: 1px solid rgba(255,255,255,0.8);
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .activity-card:active { transform: scale(0.98); }
+    .card-content { padding: 16px; }
+    .card-tags { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;}
+    .tag { background: rgba(255, 211, 110, 0.3); color: var(--primary-orange); font-size: 12px; padding: 4px 10px; border-radius: 8px; font-weight: 800; }
+    .status { background: #E8F5E9; color: #2E7D32; font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: bold; }
+    .status.full { background: #FFEBEE; color: #C62828; }
+    .activity-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; line-height: 1.4;}
+    .activity-desc { font-size: 13px; color: var(--light-brown); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+    .activity-info { font-size: 12px; color: var(--light-brown); display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-weight: 500;}
+    
+    .card-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed rgba(92, 61, 46, 0.1); padding-top: 12px; }
+    .price { font-size: 20px; font-weight: 900; color: var(--primary-orange); margin-right: 8px; }
+    .member-price { font-size: 11px; color: #fff; background: var(--primary-orange); padding: 2px 6px; border-radius: 6px; font-weight: bold;}
+    .signup-info { font-size: 12px; color: var(--light-brown); }
+
+    /* ---------------- 2. 底部导航栏 (Glassmorphism & Sliding) ---------------- */
+    .bottom-nav {
+      position: fixed; bottom: 0; width: 100%; max-width: 480px; height: 80px;
+      display: flex; justify-content: space-around; align-items: center;
+      z-index: 1000; padding-bottom: env(safe-area-inset-bottom);
+      border-radius: 30px 30px 0 0;
+      box-shadow: 0 -5px 25px rgba(92, 61, 46, 0.05);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--light-brown); font-size: 11px; font-weight: bold; gap: 4px; z-index: 2; cursor: pointer;
+      position: relative; height: 100%; transition: color 0.3s;
+    }
+    .nav-item.active { color: var(--primary-orange); }
+    .nav-icon { font-size: 24px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .nav-item.active .nav-icon { transform: translateY(-4px) scale(1.1); }
+    
+    /* 底部滑动指示器 */
+    .nav-indicator {
+      position: absolute; top: 15px; width: 50px; height: 50px;
+      background: rgba(255, 136, 75, 0.15);
+      border-radius: 18px; z-index: 1;
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* ---------------- 3. 活动详情 & 表单 ---------------- */
+    .detail-box { background: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 20px; margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.8); }
+    .sec-title { font-size: 16px; font-weight: 800; margin-bottom: 12px; color: var(--text-brown); display: flex; align-items: center; gap: 8px;}
+    .detail-text { font-size: 14px; color: var(--light-brown); line-height: 1.6; margin-bottom: 8px;}
+    
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 6px; color: var(--text-brown); }
+    .form-group input { width: 100%; padding: 12px; border: 2px solid rgba(255, 211, 110, 0.5); border-radius: 12px; font-size: 14px; background: rgba(255,255,255,0.7); outline: none; color: var(--text-brown); font-weight: 500;}
+    .form-group input:focus { border-color: var(--primary-orange); background: #fff; }
+    
+    .main-btn { width: 100%; background: linear-gradient(135deg, var(--secondary-yellow), var(--primary-orange)); color: #fff; border: none; padding: 14px; border-radius: 25px; font-weight: 900; font-size: 16px; cursor: pointer; box-shadow: 0 8px 16px rgba(255, 136, 75, 0.3); transition: transform 0.2s;}
+    .main-btn:active { transform: scale(0.97); }
+
+    /* ---------------- 4. DeepTalk 游戏 (适配暖色调) ---------------- */
+    .deeptalk-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; color: var(--light-brown); margin-bottom: 20px; }
+    .btn-small { background: rgba(255,255,255,0.8); border: 1px solid var(--primary-orange); color: var(--primary-orange); padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .card-stage { perspective: 1000px; height: 420px; margin-bottom: 30px; }
+    .card-3d { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 24px; box-shadow: 0 15px 35px rgba(92, 61, 46, 0.15); }
+    .card-3d.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; border: 2px solid rgba(255,255,255,0.5); }
+    .card-front { background: rgba(255,255,255,0.9); }
+    .card-back { transform: rotateY(180deg); background: linear-gradient(135deg, var(--secondary-yellow) 0%, var(--primary-orange) 100%); color: #fff; }
+    .card-back.dare { background: linear-gradient(135deg, #FF884B 0%, #D35400 100%); }
+    .zone-tag { position: absolute; top: 24px; background: rgba(255,255,255,0.3); padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+    .question-text { font-size: 24px; font-weight: 900; line-height: 1.5; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+    .game-controls { display: flex; gap: 16px; }
+    
+    /* ---------------- 5. 我的 (个人中心) ---------------- */
+    .profile-header { display: flex; align-items: center; gap: 20px; padding: 20px; background: rgba(255,255,255,0.6); border-radius: 20px; margin-bottom: 24px; box-shadow: var(--shadow);}
+    .avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; background: var(--secondary-yellow); display: flex; align-items: center; justify-content: center; font-size: 30px; }
+    .user-info h2 { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+    .user-info p { font-size: 12px; color: #fff; background: var(--primary-orange); padding: 2px 8px; border-radius: 10px; display: inline-block; font-weight: bold;}
+    
+    .menu-list { background: rgba(255,255,255,0.8); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.5); }
+    .menu-item { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: 800; cursor: pointer; }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:active { background: rgba(0,0,0,0.02); }
+    
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- 顶部玻璃导航栏 -->
+  <div class="navbar glass-effect">
+    <span class="back-btn" id="backBtn" onclick="goBack()">‹</span>
+    <div class="logo-title" id="logoTitle">
+      <img src="K心理logo.png" alt="K心理Logo" onerror="this.style.display='none'">
+      <span>K心理</span>
+    </div>
+    <span class="city-tag" id="topRightBtn">📍广州</span>
+  </div>
+
+  <!-- 视图 1：首页 (活动列表) -->
+  <div id="view-home" class="view active">
+    <!-- DeepTalk 游戏入口 -->
+    <div class="banner-game" onclick="openView('view-deeptalk')">
+      <div>
+        <div class="game-title">✨ DeepTalk 关系推进器</div>
+        <div class="game-sub">真心话大冒险 · 破冰社交破圈利器</div>
+      </div>
+      <button class="game-btn">立即玩</button>
+    </div>
+
+    <div class="section-title">🔥 8.22-8.23 本周末活动</div>
+    <div id="activityList"></div>
+  </div>
+
+  <!-- 视图 2：发布新活动 -->
+  <div id="view-add" class="view">
+    <div class="detail-box">
+      <div class="sec-title">📝 发布新活动</div>
+      <form onsubmit="handleActivitySubmit(event)">
+        <div class="form-group"><label>活动名称</label><input id="formTitle" required placeholder="例如：【心理露营】自我探索局"></div>
+        <div class="form-group"><label>分类标签</label><input id="formTag" required placeholder="例如：剧本杀 / 联谊 / 沙龙"></div>
+        <div class="form-group"><label>一句话亮点</label><input id="formSummary" required placeholder="活动最吸引人的点"></div>
+        <div class="form-group"><label>时间 (如：本周六 14:30-18:00)</label><input id="formTime" required placeholder="本周六 14:30-18:00"></div>
+        <div class="form-group"><label>地点</label><input id="formLocation" required placeholder="活动场地"></div>
+        <div class="form-group"><label>原价 (元)</label><input id="formPrice" type="number" required placeholder="99"></div>
+        <div class="form-group"><label>名额限制 (人)</label><input id="formMaxCount" type="number" required placeholder="8"></div>
+        <button class="main-btn" type="submit" style="margin-top: 10px;">发布活动</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 视图 3：我的 (个人中心) -->
+  <div id="view-mine" class="view">
+    <div class="profile-header">
+      <div class="avatar">🍊</div>
+      <div class="user-info">
+        <h2>水豚朋友</h2>
+        <p>✨ 尊贵 K心理 会员</p>
+      </div>
+    </div>
+    
+    <div class="menu-list">
+      <div class="menu-item"><span>🎟️ 我的报名</span> <span>›</span></div>
+      <div class="menu-item"><span>💖 心动互选结果</span> <span>›</span></div>
+      <div class="menu-item"><span>💳 会员福利</span> <span>›</span></div>
+      <div class="menu-item"><span>⚙️ 设置</span> <span>›</span></div>
+    </div>
+  </div>
+
+  <!-- 视图 4：活动详情 -->
+  <div id="view-detail" class="view">
+    <div id="detailContent"></div>
+  </div>
+
+  <!-- 视图 5：DeepTalk 卡牌游戏 -->
+  <div id="view-deeptalk" class="view">
+    <div class="deeptalk-header">
+      <span id="cardCounts">真心话: 6 | 大冒险: 3</span>
+      <div>
+        <button class="btn-small" onclick="resetPools()">洗牌</button>
+      </div>
+    </div>
+
+    <div class="card-stage">
+      <div class="card-3d" id="card3d">
+        <div class="card-face card-front">
+          <div style="font-size: 60px; margin-bottom: 16px;">🍊</div>
+          <div style="font-size: 15px; color: var(--light-brown); font-weight: bold;" id="frontHint">点击下方抽取卡牌</div>
+        </div>
+        <div class="card-face card-back" id="cardBack">
+          <div class="zone-tag" id="zoneTag">关系升温区</div>
+          <div class="question-text" id="questionText">准备好了吗？</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-controls">
+      <button class="main-btn" style="background: linear-gradient(135deg, #FFD36E, #FFB74D);" onclick="drawCard('truth')">抽 真心话</button>
+      <button class="main-btn" style="background: linear-gradient(135deg, #FF884B, #D35400);" onclick="drawCard('dare')">抽 大冒险</button>
+    </div>
+  </div>
+
+  <!-- 底部毛玻璃导航栏 -->
+  <div class="bottom-nav glass-effect" id="bottomNav">
+    <div class="nav-indicator" id="navIndicator"></div>
+    <div class="nav-item active" onclick="switchTab(0, 'view-home')" id="tab-0">
+      <div class="nav-icon">🏠</div>
+      <span>活动主页</span>
+    </div>
+    <div class="nav-item" onclick="switchTab(1, 'view-add')" id="tab-1">
+      <div class="nav-icon">➕</div>
+      <span>发布活动</span>
+    </div>
+    <div class="nav-item" onclick="switchTab(2, 'view-mine')" id="tab-2">
+      <div class="nav-icon">👤</div>
+      <span>我的</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------------- 1. 核心数据 (融合用户提供的7个活动) ----------------
+  const initData = [
+    {
+      id: "a1", tag: "剧本杀",
+      title: "心理剧本杀《人为什么会变成这样？》",
+      summary: "他们为什么会这样爱，为什么会这样恨，为什么明明想逃，却一次次回到熟悉的伤害里？",
+      time: "本周六 14:30-18:00", location: "广州市区",
+      price: 99, memberPrice: 89, maxCount: 8, signupCount: 8, status: "已满",
+      desc: "为什么明明想逃，却一次次回到熟悉的伤害里？\n进入故事，看依恋、防御与关系模式。"
+    },
+    {
+      id: "a2", tag: "交友联谊",
+      title: "恋综小屋之广州单身联谊",
+      summary: "那些屏幕中的心动瞬间，这次轮到你！",
+      time: "本周六 19:00-22:00", location: "天河公园地铁站",
+      price: 89, memberPrice: 80, maxCount: 20, signupCount: 15, status: "报名中(需审核)",
+      desc: "做游戏、聊聊天、认识新的人，这一次，观察别人心动的人变成了你。"
+    },
+    {
+      id: "a3", tag: "剧本杀",
+      title: "心理剧本杀《救人与越界》",
+      summary: "医院伦理，当“救人”与“守规”发生冲突，你会站在哪一边？",
+      time: "本周日 14:30-17:30", location: "待定",
+      price: 99, memberPrice: 89, maxCount: 8, signupCount: 3, status: "报名中",
+      desc: "如果救人意味着打破规则，你会怎么选？\n在一次次选择里，看见自己真正相信的价值。"
+    },
+    {
+      id: "a4", tag: "个人成长",
+      title: "副业交流「用MBTI探寻个体优势」",
+      summary: "有点问题别慌张，发挥个人长板板～",
+      time: "本周日 14:30-16:30", location: "天河公园地铁站附近",
+      price: 59, memberPrice: 53, maxCount: 15, signupCount: 6, status: "报名中",
+      desc: "副业做什么？自己到底擅长什么？\n从MBTI出发聊优势、能力和搞钱方向～"
+    },
+    {
+      id: "a5", tag: "创投沙龙",
+      title: "创投沙龙「AI·OPC实验室」",
+      summary: "一个人的生产力革命，与一群人的未来连接。",
+      time: "本周日 14:30-16:30", location: "全国高校技术转移转化智能出行中心",
+      price: 69, memberPrice: 62, maxCount: 10, signupCount: 5, status: "报名中",
+      desc: "青年社交×AI实践×资源链接\n聊AI、聊OPC、聊项目，也认识正在折腾新东西的同频伙伴。"
+    },
+    {
+      id: "a6", tag: "OH卡牌",
+      title: "OH卡牌＋人生卡点团体心理咨询",
+      summary: "那些困住你的，也许藏着新的答案，让卡牌替你表达未曾说出口的故事。",
+      time: "本周日 19:00-21:00", location: "越秀区市二宫地铁站附近",
+      price: 69, memberPrice: 62, maxCount: 13, signupCount: 8, status: "报名中",
+      desc: "主持：心理咨询师阿Ken\n有些困惑想了很久，却始终说不清。让卡牌替你表达未曾说出口的故事。"
+    },
+    {
+      id: "a7", tag: "轻松社交",
+      title: "海心沙派对「一晚上认识一群舒服的人」",
+      summary: "在夜风和游戏里相遇，轻松认识新朋友～",
+      time: "本周日 19:00-22:00", location: "海心沙",
+      price: 58, memberPrice: 52, maxCount: 30, signupCount: 22, status: "报名中",
+      desc: "没有硬聊和尬社交，在夜风和游戏里自然熟起来～"
+    }
+  ];
+
+  let activities = JSON.parse(localStorage.getItem('k_v2_activities'));
+  if (!activities) {
+    activities = initData;
+    localStorage.setItem('k_v2_activities', JSON.stringify(activities));
+  }
+
+  // ---------------- 2. 界面与路由逻辑 ----------------
+  let currentMainTab = 'view-home';
+
+  function initApp() {
+    renderActivityList();
+    // 初始化指示器位置
+    setTimeout(() => switchTab(0, 'view-home'), 100);
+  }
+
+  function switchTab(index, viewId) {
+    // 移动毛玻璃滑块指示器
+    const indicator = document.getElementById('navIndicator');
+    const tabWidth = window.innerWidth > 480 ? 480 / 3 : window.innerWidth / 3;
+    const centerOffset = (tabWidth / 2) - 25; // 25 is half of indicator width
+    indicator.style.transform = `translateX(${index * tabWidth + centerOffset}px)`;
+
+    // 更新 active 类
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${index}`).classList.add('active');
+
+    currentMainTab = viewId;
+    openView(viewId, true);
+  }
+
+  function openView(viewId, isMainTab = false) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    
+    const backBtn = document.getElementById('backBtn');
+    const bottomNav = document.getElementById('bottomNav');
+    const logoTitle = document.getElementById('logoTitle');
+
+    if (isMainTab) {
+      backBtn.style.display = 'none';
+      bottomNav.style.display = 'flex';
+      logoTitle.style.display = 'flex';
+    } else {
+      backBtn.style.display = 'block';
+      bottomNav.style.display = 'none'; // 子页面隐藏底部导航
+      logoTitle.style.display = 'none';
+    }
+  }
+
+  function goBack() {
+    openView(currentMainTab, true);
+    if(currentMainTab === 'view-home') renderActivityList();
+  }
+
+  // ---------------- 3. 渲染首页 ----------------
+  function renderActivityList() {
+    const listEl = document.getElementById('activityList');
+    listEl.innerHTML = activities.map(act => `
+      <div class="activity-card" onclick="openDetail('${act.id}')">
+        <div class="card-content">
+          <div class="card-tags">
+            <span class="tag">${act.tag}</span>
+            <span class="status ${act.status.includes('满') ? 'full' : ''}">${act.status}</span>
+          </div>
+          <div class="activity-title">${act.title}</div>
+          <div class="activity-desc">${act.summary}</div>
+          <div class="activity-info">
+            <span>🕒 ${act.time}</span>
+            <span>📍 ${act.location}</span>
+          </div>
+          <div class="card-footer">
+            <div>
+              <span class="price">¥${act.price}</span>
+              <span class="member-price">会员价 ¥${act.memberPrice}</span>
+            </div>
+            <div class="signup-info">${act.signupCount}/${act.maxCount}人</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------------- 4. 活动详情与发布 ----------------
+  function openDetail(id) {
+    const act = activities.find(a => a.id === id);
+    if (!act) return;
+    
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-box" style="margin-top: 10px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+           <span class="tag">${act.tag}</span>
+           <span class="status ${act.status.includes('满') ? 'full' : ''}">${act.status}</span>
+        </div>
+        <div style="font-size: 22px; font-weight: 900; margin-bottom: 8px;">${act.title}</div>
+        <div style="font-size: 14px; color: var(--light-brown); margin-bottom: 16px;">${act.summary}</div>
+        <div style="background: rgba(255, 136, 75, 0.1); padding: 12px; border-radius: 12px; margin-bottom: 16px;">
+          <div style="font-size: 24px; font-weight: 900; color: var(--primary-orange);">¥${act.price}</div>
+          <div style="font-size: 12px; font-weight:bold; color: var(--text-brown); margin-top: 4px;">🎁 会员福利：周三晚12点前报名享9折 ¥${act.memberPrice}</div>
+        </div>
+      </div>
+      <div class="detail-box">
+        <div class="sec-title">📌 基础信息</div>
+        <div class="detail-text">🕒 时间：${act.time}</div>
+        <div class="detail-text">📍 地点：${act.location}</div>
+        <div class="detail-text">👥 人数：限 ${act.maxCount} 人 (已报 ${act.signupCount} 人)</div>
+      </div>
+      <div class="detail-box">
+        <div class="sec-title">📖 活动介绍</div>
+        <div class="detail-text" style="white-space: pre-line;">${act.desc}</div>
+      </div>
+      <button class="main-btn" onclick="alert('即将跳转客服微信报名！')">立即锁定名额</button>
+    `;
+    openView('view-detail');
+  }
+
+  function handleActivitySubmit(e) {
+    e.preventDefault();
+    const price = Number(document.getElementById('formPrice').value);
+    const newAct = {
+      id: 'act_' + Date.now(),
+      title: document.getElementById('formTitle').value,
+      tag: document.getElementById('formTag').value,
+      summary: document.getElementById('formSummary').value,
+      time: document.getElementById('formTime').value,
+      location: document.getElementById('formLocation').value,
+      price: price,
+      memberPrice: Math.floor(price * 0.9), // 自动算9折会员价
+      maxCount: Number(document.getElementById('formMaxCount').value),
+      signupCount: 0,
+      status: '报名中',
+      desc: '暂无详细介绍'
+    };
+    activities.unshift(newAct);
+    localStorage.setItem('k_v2_activities', JSON.stringify(activities));
+    alert('发布成功！');
+    e.target.reset();
+    switchTab(0, 'view-home'); // 回到主页
+  }
+
+  // ---------------- 5. DeepTalk 游戏逻辑 ----------------
+  const deeptalkDb = {
+    truth: [
+      { zone: "初级安全区", text: "你最容易对什么样的人有好感？" },
+      { zone: "关系升温区", text: "你会偷偷吃醋吗？" },
+      { zone: "深层情绪区", text: "你在感情里最缺什么？" },
+      { zone: "微心动区", text: "现场有没有你想进一步认识的人？" }
+    ],
+    dare: [
+      { zone: "轻互动区", text: "和左边的人击掌并夸他一句" },
+      { zone: "升温互动区", text: "找一个人互相说第一印象" },
+      { zone: "暧昧区", text: "对一个人轻声说一句悄悄话" }
+    ]
+  };
+  let truthPool = [], darePool = [];
+
+  function resetPools() {
+    truthPool = [...deeptalkDb.truth];
+    darePool = [...deeptalkDb.dare];
+    updateCardCounts();
+    document.getElementById('card3d').classList.remove('flipped');
+    document.getElementById('frontHint').innerText = "已重新洗牌，开启新一轮！";
+  }
+
+  function updateCardCounts() {
+    document.getElementById('cardCounts').innerText = `真心话: ${truthPool.length} | 大冒险: ${darePool.length}`;
+  }
+
+  function drawCard(type) {
+    const pool = (type === 'truth') ? truthPool : darePool;
+    if (pool.length === 0) { alert('该牌堆已抽完，请洗牌！'); return; }
+
+    const card3d = document.getElementById('card3d');
+    card3d.classList.remove('flipped');
+
+    setTimeout(() => {
+      const idx = Math.floor(Math.random() * pool.length);
+      const item = pool.splice(idx, 1)[0];
+      
+      const cardBack = document.getElementById('cardBack');
+      if (type === 'dare') cardBack.classList.add('dare');
+      else cardBack.classList.remove('dare');
+
+      document.getElementById('zoneTag').innerText = item.zone;
+      document.getElementById('questionText').innerText = item.text;
+
+      updateCardCounts();
+      card3d.classList.add('flipped');
+    }, 300);
+  }
+
+  // 启动应用
+  window.onload = () => {
+    initApp();
+    resetPools(); // 初始化牌库
+  };
+</script>
+</body>
+</html>
